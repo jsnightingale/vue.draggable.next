@@ -256,14 +256,16 @@ const draggableComponent = defineComponent({
     updatePositions(oldIndicies, newIndex) {
       /** @type {<T = any>(list: T[]) => T[]} */
       const updatePosition = list => {
-        // get selected items with correct order
-        // sort -> reverse (for prevent Array.splice side effect) -> splice -> reverse
+        // Get selected items in the correct order
         const items = oldIndicies
-          .sort()
-          .reverse()
-          .flatMap(oldIndex => list.splice(oldIndex, 1))
-          .reverse();
-        return list.splice(newIndex, 0, ...items);
+          .sort((a, b) => b - a) // Sort in descending order
+          .map(oldIndex => list.splice(oldIndex, 1)[0])
+          .reverse(); // Remove the items
+    
+        // Insert the items at the new index
+        list.splice(newIndex, 0, ...items);
+    
+        return list; // Return the updated list
       };
       this.alterList(updatePosition);
     },
@@ -318,7 +320,7 @@ const draggableComponent = defineComponent({
       // remove nodes
       evt.items.forEach(e => removeNode(e));
       // insert elements
-      const newIndex = this.getVmIndexFromDomIndex(evt.newIndex);
+      const newIndex = this.getVmIndexFromDomIndex(evt.newIndicies[0].index);
       this.spliceList(newIndex, 0, ...elements);
       // emit change
       const added = elements.map((element, index) => ({
@@ -441,7 +443,7 @@ const draggableComponent = defineComponent({
       );
       // move items
       const oldIndicies = itemsWithIndex.map(({ index }) => index - headerSize);
-      const newIndex = this.getVmIndexFromDomIndex(evt.newIndex);
+      const newIndex = this.getVmIndexFromDomIndex(evt.newIndicies[0].index);
       // note: Array.from = prevent sort change side effect
       this.updatePositions(Array.from(oldIndicies), newIndex);
       // emit change
